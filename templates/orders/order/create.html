@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Đặt hàng - MiniShop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shipping-fast"></i> Thông tin giao hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-check"></i> Đặt hàng
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-receipt"></i> Chi tiết đơn hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="order-summary">
+                    {% for item in cart %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="flex-grow-1">
+                            <small>{{ item.product.name }}</small>
+                            <br>
+                            <small class="text-muted">{{ item.quantity }} x {{ item.price|floatformat:0 }} VNĐ</small>
+                        </div>
+                        <div>
+                            <strong>{{ item.total_price|floatformat:0 }} VNĐ</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    {% endfor %}
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <span>{{ cart.get_total_price|floatformat:0 }} VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Phí vận chuyển:</span>
+                        <span>Miễn phí</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <strong>Tổng cộng:</strong>
+                        <strong class="text-danger">{{ cart.get_total_price|floatformat:0 }} VNĐ</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Methods Info -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-credit-card"></i> Phương thức thanh toán
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <small>
+                        <i class="fas fa-info-circle"></i> 
+                        Hiện tại chỉ hỗ trợ thanh toán khi nhận hàng (COD)
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

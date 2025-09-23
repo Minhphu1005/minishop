@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Tạo Admin mới - MiniShop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-user-plus"></i> Thêm Admin mới
+                </h3>
+                <a href="{% url 'accounts:admin_user_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Lưu ý:</strong> Tài khoản được tạo sẽ có quyền Staff (Admin). 
+                    Chỉ Superuser mới có thể tạo tài khoản Admin.
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Tạo Admin
+                        </button>
+                        <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-arrow-left"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

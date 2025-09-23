@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chi tiết {{ user.username }} - MiniShop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-user"></i> Chi tiết người dùng: {{ user.username }}</h2>
+            <a href="{% url 'accounts:admin_user_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Về danh sách
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- User Info -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Thông tin cơ bản</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-user fa-2x text-white"></i>
+                    </div>
+                </div>
+                
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>ID:</strong></td>
+                        <td>{{ user.id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tên đăng nhập:</strong></td>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Họ tên:</strong></td>
+                        <td>{{ user.get_full_name|default:"Chưa cập nhật" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td>{{ user.email|default:"Chưa cập nhật" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngày tham gia:</strong></td>
+                        <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Đăng nhập cuối:</strong></td>
+                        <td>{{ user.last_login|date:"d/m/Y H:i"|default:"Chưa từng" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng thái:</strong></td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> Hoạt động
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-ban"></i> Vô hiệu hóa
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Quyền:</strong></td>
+                        <td>
+                            {% if user.is_superuser %}
+                            <span class="badge bg-danger">Superuser</span>
+                            {% elif user.is_staff %}
+                            <span class="badge bg-warning">Staff</span>
+                            {% else %}
+                            <span class="badge bg-primary">User</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        {% if user.id != request.user.id %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> Thao tác</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:admin_toggle_user_status' user.id %}" 
+                       class="btn {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                        <i class="fas {% if user.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                        {% if user.is_active %}Vô hiệu hóa tài khoản{% else %}Kích hoạt tài khoản{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Profile and Stats -->
+    <div class="col-md-8">
+        <!-- Profile Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-address-card"></i> Thông tin hồ sơ</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Số điện thoại:</strong></td>
+                                <td>{{ profile.phone|default:"Chưa cập nhật" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Thành phố:</strong></td>
+                                <td>{{ profile.city|default:"Chưa cập nhật" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mã bưu điện:</strong></td>
+                                <td>{{ profile.postal_code|default:"Chưa cập nhật" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Địa chỉ:</strong>
+                        <p>{{ profile.address|default:"Chưa cập nhật" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Statistics -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Thống kê mua hàng</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{ total_orders }}</h3>
+                            <p class="text-muted">Tổng đơn hàng</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <h3 class="text-success">{{ total_spent|floatformat:0 }} VNĐ</h3>
+                            <p class="text-muted">Tổng chi tiêu</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-shopping-bag"></i> Đơn hàng gần đây</h5>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders|slice:":10" %}
+                            <tr>
+                                <td><strong>#{{ order.id }}</strong></td>
+                                <td>{{ order.created_at|date:"d/m/Y" }}</td>
+                                <td>{{ order.get_total_cost|floatformat:0 }} VNĐ</td>
+                                <td>
+                                    <span class="order-status status-{{ order.status }}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'orders:order_detail' order.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if orders.count > 10 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">Hiển thị 10 đơn gần nhất / {{ orders.count }} tổng</small>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-shopping-bag fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Người dùng này chưa có đơn hàng nào</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

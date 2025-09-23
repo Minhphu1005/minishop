@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết đơn hàng #{{ order.id }} - MiniShop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt"></i> Đơn hàng #{{ order.id }}
+                    </h5>
+                    <span class="order-status status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Order Items -->
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Đơn giá</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover;" alt="{{ item.product.name }}">
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.price|floatformat:0 }} VNĐ</td>
+                                <td><strong>{{ item.get_cost|floatformat:0 }} VNĐ</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Tổng cộng:</th>
+                                <th class="text-danger">{{ order.get_total_cost|floatformat:0 }} VNĐ</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Order Info -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Thông tin đơn hàng
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Mã đơn:</strong></td>
+                            <td>#{{ order.id }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ngày đặt:</strong></td>
+                            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trạng thái:</strong></td>
+                            <td>
+                                <span class="order-status status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tổng tiền:</strong></td>
+                            <td><strong class="text-danger">{{ order.get_total_cost|floatformat:0 }} VNĐ</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Shipping Info -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-shipping-fast"></i> Thông tin giao hàng
+                </h6>
+            </div>
+            <div class="card-body">
+                <address>
+                    <strong>{{ order.first_name }} {{ order.last_name }}</strong><br>
+                    {{ order.address }}<br>
+                    {{ order.city }}, {{ order.postal_code }}<br>
+                    <abbr title="Phone">Điện thoại:</abbr> {{ order.phone }}<br>
+                    <abbr title="Email">Email:</abbr> {{ order.email }}
+                </address>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="mt-3 d-grid gap-2">
+            <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Quay lại danh sách
+            </a>
+            <a href="{% url 'products:product_list' %}" class="btn btn-success">
+                <i class="fas fa-shopping-cart"></i> Tiếp tục mua sắm
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

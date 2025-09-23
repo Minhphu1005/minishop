@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Giỏ hàng - MiniShop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-shopping-cart"></i> Giỏ hàng của bạn</h2>
+        
+        {% if cart %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Đơn giá</th>
+                        <th>Thành tiền</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart %}
+                    <tr>
+                        <td>
+                            <a href="{{ item.product.get_absolute_url }}">
+                                {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" class="cart-item-image rounded" alt="{{ item.product.name }}">
+                                {% else %}
+                                <div class="cart-item-image bg-light rounded d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            <h6>
+                                <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none">
+                                    {{ item.product.name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">{{ item.product.category.name }}</small>
+                        </td>
+                        <td>
+                            <form action="{% url 'cart:cart_add' item.product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                {{ item.update_quantity_form.quantity|as_crispy_field }}
+                                {{ item.update_quantity_form.override }}
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td>{{ item.price|floatformat:0 }} VNĐ</td>
+                        <td><strong>{{ item.total_price|floatformat:0 }} VNĐ</strong></td>
+                        <td>
+                            <form action="{% url 'cart:cart_remove' item.product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa khỏi giỏ hàng">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Cart Summary -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Tiếp tục mua sắm
+                </a>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tổng cộng</h5>
+                        <div class="d-flex justify-content-between">
+                            <span>Tạm tính:</span>
+                            <span>{{ cart.get_total_price|floatformat:0 }} VNĐ</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Phí vận chuyển:</span>
+                            <span>Miễn phí</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Tổng cộng:</strong>
+                            <strong class="text-danger">{{ cart.get_total_price|floatformat:0 }} VNĐ</strong>
+                        </div>
+                        
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'orders:order_create' %}" class="btn btn-success w-100 mt-3">
+                            <i class="fas fa-credit-card"></i> Thanh toán
+                        </a>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <small>
+                                <a href="{% url 'accounts:login' %}?next={% url 'orders:order_create' %}">Đăng nhập</a> 
+                                để tiếp tục thanh toán
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+            <h4>Giỏ hàng của bạn đang trống</h4>
+            <p class="text-muted">Hãy thêm một số sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Bắt đầu mua sắm
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
