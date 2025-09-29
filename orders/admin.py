@@ -18,3 +18,13 @@ class OrderAdmin(admin.ModelAdmin):
     def get_total_cost(self, obj):
         return f"{obj.get_total_cost():,.0f} VND"
     get_total_cost.short_description = 'Tổng tiền'
+
+    def has_add_permission(self, request):
+        return False
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Khi edit, tất cả các field ngoài 'status' sẽ readonly
+        """
+        if obj:  # đang edit
+            return [f.name for f in self.model._meta.fields if f.name != 'status']
+        return []  # khi tạo mới, tất cả editable
