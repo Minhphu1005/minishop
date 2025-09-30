@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Giỏ hàng - MiniShop{% endblock %}
+
+{% block content %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("select[name='quantity']").forEach(function (select) {
+            let defaultValue = select.value;
+            let save_state = select.closest("form").querySelector(".save_state");
+            select.addEventListener("change", function () {
+                if (this.value !== defaultValue) {
+                    this.style.border = "2px solid red";
+                    save_state.style.display = "inline";
+
+                } else {
+                    this.style.border = "";
+                    save_state.style.display = "none";
+                }
+            });
+
+            select.closest("form").addEventListener("submit", function () {
+                select.style.border = "";
+                defaultValue = select.value;
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let checkoutBtn = document.getElementById("btn_thanhtoan");
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener("click", function (e) {
+                let unsaved = document.querySelector("select[name='quantity'][style*='red']");
+                if (unsaved) {
+                    e.preventDefault();
+                    let modal = new bootstrap.Modal(document.getElementById("unsavedModal"));
+                    modal.show();
+                }
+            });
+        }
+    });
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-shopping-cart"></i> Giỏ hàng của bạn</h2>
+
+        {% if cart %}
+        <div class="table-responsive">
+            <table class="table table-striped " style="table-layout: fixed;">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Đơn giá</th>
+                        <th>Thành tiền</th>
+                        <th>Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart %}
+                    <tr>
+                        <td>
+                            <a href="{{ item.product.get_absolute_url }}">
+                                {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" class="cart-item-image rounded"
+                                    alt="{{ item.product.name }}">
+                                {% else %}
+                                <div
+                                    class="cart-item-image bg-light rounded d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            <h6>
+                                <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none">
+                                    {{ item.product.name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">{{ item.product.category.name }}</small>
+                        </td>
+                        <td position="relative">
+                            <form action="{% url 'cart:cart_add' item.product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                {{ item.update_quantity_form.quantity|as_crispy_field }}
+                                {{ item.update_quantity_form.override }}
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <span class="save_state text-danger" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle"></i></span>
+                            </form>
+
+                        </td>
+                        <td>{{ item.price|floatformat:0 }} VNĐ</td>
+                        <td><strong>{{ item.total_price|floatformat:0 }} VNĐ</strong></td>
+                        <td>
+                            <form action="{% url 'cart:cart_remove' item.product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa khỏi giỏ hàng">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Tiếp tục mua sắm
+                </a>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <!-- <h5 class="card-title">Tổng cộng</h5> -->
+                        <h5 class="card-title">Chi tiết hóa đơn</h5>
+                        <ul class="list-group mb-3">
+                            {% for item in cart %}
+                            <li class="list-group-item d-flex justify-content-between lh-sm">
+                                <div>
+                                    <h6 class="my-0">{{ item.product.name }}</h6>
+                                    <small class="text-muted">Số lượng: {{ item.quantity }}</small>
+                                </div>
+                                <span class="text-muted">{{ item.total_price|floatformat:0 }} VNĐ</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="d-flex justify-content-between">
+                            <span>Tạm tính:</span>
+                            <span>{{ cart.get_total_price|floatformat:0 }} VNĐ</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Phí vận chuyển:</span>
+                            <span>Miễn phí</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Tổng cộng:</strong>
+                            <strong class="text-danger">{{ cart.get_total_price|floatformat:0 }} VNĐ</strong>
+                        </div>
+
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'orders:order_create' %}" id="btn_thanhtoan" class="btn btn-success w-100 mt-3">
+                            <i class="fas fa-credit-card"></i> Thanh toán
+                        </a>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <small>
+                                <a href="{% url 'accounts:login' %}?next={% url 'orders:order_create' %}">Đăng nhập</a>
+                                để tiếp tục thanh toán
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+            <h4>Giỏ hàng của bạn đang trống</h4>
+            <p class="text-muted">Hãy thêm một số sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Bắt đầu mua sắm
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- thong bao  -->
+<div class="modal fade" id="unsavedModal" tabindex="-1" aria-hidden="true" style="border-radius: 30px;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-3">
+            <div class="modal-body">
+                <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                <h5>Bạn có thay đổi chưa lưu</h5>
+                <p class="text-muted">Vui lòng cập nhật số lượng trước khi thanh toán.</p>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

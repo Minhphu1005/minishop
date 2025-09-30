@@ -3,12 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import OrderItem, Order
 from .forms import OrderCreateForm
-from cart.cart import Cart
 from products.models import Review
-
+from cart.models import Cart
 @login_required
 def order_create(request):
-    cart = Cart(request)
+    cart = Cart.get_user_cart(request)
     if len(cart) == 0:
         messages.error(request, 'Giỏ hàng của bạn đang trống!')
         return redirect('cart:cart_detail')

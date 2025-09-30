@@ -1,44 +1,58 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
-
+{% load import_select %}
 {% block title %}Giỏ hàng - MiniShop{% endblock %}
 
 {% block content %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll("select[name='quantity']").forEach(function (select) {
-            let defaultValue = select.value;
-            let save_state = document.getElementById("save_state");
+        const updateBtn = document.getElementById("btn_update_cart");
+        const selects = document.querySelectorAll("select[name^='quantity_']");
+
+        // Track changes
+        selects.forEach(function (select) {
+            const defaultValue = select.value;
+            select.setAttribute('data-default', defaultValue);
+
             select.addEventListener("change", function () {
-                if (this.value !== defaultValue) {
-                    this.style.border = "2px solid red";
-                    // save_state.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle"></i>chưa lưu</span>';
-                    save_state.style.display = "inline";
+                checkForChanges();
+            });
+        });
 
-
+        function checkForChanges() {
+            let hasChanges = false;
+            selects.forEach(function (select) {
+                if (select.value !== select.getAttribute('data-default')) {
+                    hasChanges = true;
+                    select.style.border = "2px solid #ffc107";
                 } else {
-                    this.style.border = "";
-                    save_state.style.display = "none";
+                    select.style.border = "";
                 }
             });
 
-            select.closest("form").addEventListener("submit", function () {
-                select.style.border = "";
-                defaultValue = select.value;
-            });
-        });
-    });
+            if (hasChanges) {
+                updateBtn.style.display = "inline-block";
+            } else {
+                updateBtn.style.display = "none";
+            }
+        }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        let checkoutBtn = document.getElementById("btn_thanhtoan");
+        // Check unsaved changes before checkout
+        const checkoutBtn = document.getElementById("btn_thanhtoan");
         if (checkoutBtn) {
             checkoutBtn.addEventListener("click", function (e) {
-                let unsaved = document.querySelector("select[name='quantity'][style*='red']");
-                if (unsaved) {
+                let hasUnsaved = false;
+                selects.forEach(function (select) {
+                    if (select.value !== select.getAttribute('data-default')) {
+                        hasUnsaved = true;
+                    }
+                });
+
+                if (hasUnsaved) {
                     e.preventDefault();
-                    let modal = new bootstrap.Modal(document.getElementById("unsavedModal"));
+                    const modal = new bootstrap.Modal(document.getElementById("unsavedModal"));
                     modal.show();
                 }
             });
@@ -51,70 +65,73 @@
         <h2><i class="fas fa-shopping-cart"></i> Giỏ hàng của bạn</h2>
 
         {% if cart %}
-        <div class="table-responsive">
-            <table class="table table-striped " style="table-layout: fixed;">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Hình ảnh</th>
-                        <th>Sản phẩm</th>
-                        <th>Số lượng</th>
-                        <th>Đơn giá</th>
-                        <th>Thành tiền</th>
-                        <th>Xóa</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in cart %}
-                    <tr>
-                        <td>
-                            <a href="{{ item.product.get_absolute_url }}">
-                                {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" class="cart-item-image rounded"
-                                    alt="{{ item.product.name }}">
-                                {% else %}
-                                <div
-                                    class="cart-item-image bg-light rounded d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-image text-muted"></i>
-                                </div>
-                                {% endif %}
-                            </a>
-                        </td>
-                        <td>
-                            <h6>
-                                <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none">
-                                    {{ item.product.name }}
-                                </a>
-                            </h6>
-                            <small class="text-muted">{{ item.product.category.name }}</small>
-                        </td>
-                        <td position="relative">
-                            <form action="{% url 'cart:cart_add' item.product.id %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                {{ item.update_quantity_form.quantity|as_crispy_field }}
-                                {{ item.update_quantity_form.override }}
-                                <button type="submit" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
-                                <span id="save_state" style="display: none;" class="text-danger">
-                                    <i class="fas fa-exclamation-triangle"></i></span>
-                            </form>
+        <form action="{% url 'cart:cart_update_all' %}" method="post">
+            {% csrf_token %}
 
-                        </td>
-                        <td>{{ item.price|floatformat:0 }} VNĐ</td>
-                        <td><strong>{{ item.total_price|floatformat:0 }} VNĐ</strong></td>
-                        <td>
-                            <form action="{% url 'cart:cart_remove' item.product.id %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa khỏi giỏ hàng">
+            <div class="table-responsive">
+                <table class="table table-striped" style="table-layout: fixed;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 15%;">Hình ảnh</th>
+                            <th style="width: 30%;">Sản phẩm</th>
+                            <th style="width: 15%;">Số lượng</th>
+                            <th style="width: 15%;">Đơn giá</th>
+                            <th style="width: 15%;">Thành tiền</th>
+                            <th style="width: 10%;">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart %}
+                        <tr>
+                            <td>
+                                <a href="{{ item.product.get_absolute_url }}">
+                                    {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" class="cart-item-image rounded"
+                                        alt="{{ item.product.name }}">
+                                    {% else %}
+                                    <div
+                                        class="cart-item-image bg-light rounded d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>
+                                <h6>
+                                    <a href="{{ item.product.get_absolute_url }}" class="text-decoration-none">
+                                        {{ item.product.name }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ item.product.category.name }}</small>
+                            </td>
+                            <td>
+                                {% quantity_select item %}
+                            </td>
+                            <td>{{ item.price|floatformat:0 }} VNĐ</td>
+                            <td><strong>{{ item.total_price|floatformat:0 }} VNĐ</strong></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    onclick="this.closest('tr').querySelector('select').value='0'; this.closest('form').submit();"
+                                    title="Xóa khỏi giỏ hàng">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Update Button -->
+            <div class="mb-3">
+                <button type="submit" id="btn_update_cart" class="btn btn-primary" style="display: none;">
+                    <i class="fas fa-sync-alt"></i> Cập nhật giỏ hàng
+                </button>
+                <small class="text-muted ms-2">
+                    <i class="fas fa-info-circle"></i> Số lượng thay đổi sẽ được tô màu vàng
+                </small>
+            </div>
+        </form>
 
         <!-- Cart Summary -->
         <div class="row mt-4">
@@ -126,7 +143,6 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <!-- <h5 class="card-title">Tổng cộng</h5> -->
                         <h5 class="card-title">Chi tiết hóa đơn</h5>
                         <ul class="list-group mb-3">
                             {% for item in cart %}
@@ -185,18 +201,18 @@
     </div>
 </div>
 
-
-<!-- Unsaved Changes Modal -->
-<div class="modal fade" id="unsavedModal" tabindex="-1" aria-hidden="true" style="border-radius: 30px;">
+<!-- Modal thông báo -->
+<div class="modal fade" id="unsavedModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-center p-3">
             <div class="modal-body">
                 <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
                 <h5>Bạn có thay đổi chưa lưu</h5>
-                <p class="text-muted">Vui lòng cập nhật số lượng trước khi thanh toán.</p>
+                <p class="text-muted">Vui lòng nhấn "Cập nhật giỏ hàng" trước khi thanh toán.</p>
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

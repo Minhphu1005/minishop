@@ -1,0 +1,9 @@
+<select name="quantity_{{ item.product.id }}" class="form-select form-select-sm" style="max-width: 100px;">
+    {% for choice_value, choice_label in item.update_quantity_form.quantity.field.choices %}
+        {% if choice_value == item.quantity %}
+            <option value="{{ choice_value }}" selected>{{ choice_label }}</option>
+        {% else %}
+            <option value="{{ choice_value }}">{{ choice_label }}</option>
+        {% endif %}
+    {% endfor %}
+</select>
