@@ -3,12 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import OrderItem, Order
 from .forms import OrderCreateForm
-from cart.cart import Cart
-
-
+from products.models import Review
+from cart.models import Cart
 @login_required
 def order_create(request):
-    cart = Cart(request)
+    cart = Cart.get_user_cart(request)
     if len(cart) == 0:
         messages.error(request, 'Giỏ hàng của bạn đang trống!')
         return redirect('cart:cart_detail')
@@ -63,4 +62,14 @@ def order_detail(request, order_id):
 @login_required
 def order_list(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'orders/order/list.html', {'orders': orders})
+
+    product_ids = OrderItem.objects.filter(order__in=orders).values_list('product_id', flat=True)
+
+    reviewed_product_ids = list(
+        Review.objects.filter(user=request.user,product_id__in=product_ids).values_list('product_id', flat=True)
+    )
+    return render(request, 'orders/order/list.html', 
+            {'orders': orders,
+             'reviewed_product_ids': reviewed_product_ids
+            })
+    

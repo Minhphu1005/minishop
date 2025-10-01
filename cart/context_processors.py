@@ -1,5 +1,8 @@
-from .cart import Cart
+from .models import Cart
 
 
 def cart(request):
-    return {'cart': Cart(request)}
+    if request.user.is_authenticated:
+        cart,created = Cart.objects.get_or_create(user=request.user)
+        return {'cart' : cart}
+    return {'cart': None}
